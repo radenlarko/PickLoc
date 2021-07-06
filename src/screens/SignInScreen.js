@@ -20,22 +20,21 @@ import { AuthContext } from '../store/AuthContext';
 
 const SignInScreen = ({ navigation }) => {
   const { signIn } = useContext(AuthContext);
-
-  useEffect(() => {
-    Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
-    Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
-
-    // cleanup function
-    return () => {
-      Keyboard.removeListener('keyboardDidShow', _keyboardDidShow);
-      Keyboard.removeListener('keyboardDidHide', _keyboardDidShow);
-    };
-  }, []);
-
   const [keyboardStatus, setKeyboardStatus] = useState('close');
 
-  const _keyboardDidShow = () => setKeyboardStatus('open');
-  const _keyboardDidHide = () => setKeyboardStatus('close');
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus('open');
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus('close');
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const [username, setUsername] = useState({
     value: '',
@@ -49,7 +48,7 @@ const SignInScreen = ({ navigation }) => {
     secure: true,
   });
 
-  const handleUser = (value) => {
+  const handleUser = value => {
     if (value.trim().length >= 4) {
       setUsername({
         ...username,
@@ -67,7 +66,7 @@ const SignInScreen = ({ navigation }) => {
     }
   };
 
-  const handlePassword = (value) => {
+  const handlePassword = value => {
     if (value.trim().length >= 8) {
       setPassword({
         ...password,
@@ -119,7 +118,7 @@ const SignInScreen = ({ navigation }) => {
     }
   };
 
-  const handleValidUser = (value) => {
+  const handleValidUser = value => {
     if (value.trim().length >= 4) {
       setUsername({
         ...username,
@@ -135,7 +134,7 @@ const SignInScreen = ({ navigation }) => {
     }
   };
 
-  const handleValidPassword = (value) => {
+  const handleValidPassword = value => {
     if (value.trim().length >= 8) {
       setPassword({
         ...password,
@@ -168,8 +167,8 @@ const SignInScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 placeholder="user name"
                 value={username.value}
-                onChangeText={(value) => handleUser(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => handleUser(value)}
+                onEndEditing={e => {
                   handleValidUser(e.nativeEvent.text);
                 }}
                 style={styles.textInput}
@@ -202,8 +201,8 @@ const SignInScreen = ({ navigation }) => {
                 secureTextEntry={password.secure ? true : false}
                 placeholder="password"
                 value={password.value}
-                onChangeText={(value) => handlePassword(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => handlePassword(value)}
+                onEndEditing={e => {
                   handleValidPassword(e.nativeEvent.text);
                 }}
                 style={styles.textInput}

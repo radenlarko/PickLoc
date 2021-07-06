@@ -18,21 +18,21 @@ import { BgRoot, LogoPickLocSmall } from '../assets/image';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const SignUpScreen = ({ navigation }) => {
-  useEffect(() => {
-    Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
-    Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
-
-    // cleanup function
-    return () => {
-      Keyboard.removeListener('keyboardDidShow', _keyboardDidShow);
-      Keyboard.removeListener('keyboardDidHide', _keyboardDidHide);
-    };
-  }, []);
-
   const [keyboardStatus, setKeyboardStatus] = useState('close');
 
-  const _keyboardDidShow = () => setKeyboardStatus('open');
-  const _keyboardDidHide = () => setKeyboardStatus('close');
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardStatus('open');
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardStatus('close');
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -43,7 +43,7 @@ const SignUpScreen = ({ navigation }) => {
     console.log(`${username} ${email} ${password} ${confirmPass}`);
     Alert.alert(
       'Success!!!',
-      `${username} ${email} ${password} ${confirmPass}`
+      `${username} ${email} ${password} ${confirmPass}`,
     );
   };
 
@@ -66,8 +66,8 @@ const SignUpScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 placeholder="user name"
                 value={username}
-                onChangeText={(value) => setUsername(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => setUsername(value)}
+                onEndEditing={e => {
                   console.log(e.nativeEvent.text);
                   Alert.alert(String(e.nativeEvent.text));
                 }}
@@ -85,8 +85,8 @@ const SignUpScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 placeholder="email"
                 value={email}
-                onChangeText={(value) => setEmail(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => setEmail(value)}
+                onEndEditing={e => {
                   console.log(e.nativeEvent.text);
                   Alert.alert(String(e.nativeEvent.text));
                 }}
@@ -105,8 +105,8 @@ const SignUpScreen = ({ navigation }) => {
                 secureTextEntry={true}
                 placeholder="password"
                 value={password}
-                onChangeText={(value) => setPassword(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => setPassword(value)}
+                onEndEditing={e => {
                   console.log(e.nativeEvent.text);
                   Alert.alert(String(e.nativeEvent.text));
                 }}
@@ -125,8 +125,8 @@ const SignUpScreen = ({ navigation }) => {
                 secureTextEntry={true}
                 placeholder="confirm password"
                 value={confirmPass}
-                onChangeText={(value) => setConfirmPas(value)}
-                onEndEditing={(e) => {
+                onChangeText={value => setConfirmPas(value)}
+                onEndEditing={e => {
                   console.log(e.nativeEvent.text);
                   Alert.alert(String(e.nativeEvent.text));
                 }}
