@@ -14,12 +14,19 @@ import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BgApp, ImageSample } from '../assets/image';
 import Header from '../components/Header';
+import moment from 'moment';
 
-const DetailsScreen2 = ({ navigation }) => {
+const DetailsScreen2 = ({route, navigation }) => {
+  const { item } = route.params;
+  const title = item.title;
+  const body = item.body;
+  const image = item.image;
+  const createdAt = item.createdAt;
+
   return (
     <ImageBackground source={BgApp} style={styles.container}>
       <Header
-        label="Details 2"
+        label="Details"
         button={
           <MaterialCommunityIcons
             name="chevron-left"
@@ -31,16 +38,18 @@ const DetailsScreen2 = ({ navigation }) => {
       />
       <ScrollView style={styles.mainContainer}>
         <Image
-          source={ImageSample}
+          source={{
+            uri: `http://localhost:4000/${image}`,
+          }}
           alt="picture-sample"
           style={styles.picture}
         />
         <View style={styles.containerContent}>
           <View style={styles.dateContainer}>
-            <Text style={{ color: '#59463B' }}>Jun 30, 2021</Text>
+            <Text style={{ color: '#59463B' }}>{moment(createdAt).format('ll')}</Text>
             <Text
               style={{ color: '#59463B', fontSize: 20, fontWeight: 'bold' }}>
-              11:49 AM
+              {moment(createdAt).format('LT')}
             </Text>
           </View>
           <View style={[styles.map, styles.mapContainer]}>
@@ -80,7 +89,7 @@ const DetailsScreen2 = ({ navigation }) => {
           </View>
           <View style={styles.containerAddress}>
             <Text style={styles.address}>
-              Jl. H Ganeng No. 64 Cipayung, Depok
+              {title}
             </Text>
           </View>
         </View>
@@ -88,9 +97,7 @@ const DetailsScreen2 = ({ navigation }) => {
           <View style={styles.remarksContainer}>
             <Text>Remarks : </Text>
             <Text>
-              Lorem ipsum, atau ringkasnya lipsum, adalah teks standar yang
-              ditempatkan untuk mendemostrasikan elemen grafis atau presentasi
-              visual seperti font, tipografi, dan tata letak.
+              {body}
             </Text>
           </View>
         </View>
@@ -147,7 +154,7 @@ const styles = StyleSheet.create({
     height: 55,
     borderRadius: 30,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
     overflow: 'hidden',
   },
   coordinateTitle: {

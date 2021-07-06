@@ -1,0 +1,5 @@
+List ADB Devices
+
+adb -s emulator-5554 reverse tcp:4000 tcp:4000
+
+adb -s RR8N105YA2V reverse tcp:4000 tcp:4000

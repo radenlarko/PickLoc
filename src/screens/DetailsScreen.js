@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     height: 55,
     borderRadius: 30,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
     overflow: 'hidden',
   },
   coordinateTitle: {
