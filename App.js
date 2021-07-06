@@ -1,13 +1,12 @@
+import 'react-native-gesture-handler';
 import React from 'react';
-import {StyleSheet} from 'react-native';
-import Maps from './src/screens/Maps';
+import AuthProvider from './src/store/AuthContext';
+import Navigation from './src/navigation';
 
-const App = () => {
+export default function App() {
   return (
-    <Maps />
+    <AuthProvider>
+      <Navigation />
+    </AuthProvider>
   );
-};
-
-export default App;
-
-const styles = StyleSheet.create({});
+}
