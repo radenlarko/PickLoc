@@ -17,6 +17,7 @@ import Header from '../components/Header';
 import Animated from 'react-native-reanimated';
 import BottomSheet from 'reanimated-bottom-sheet';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import ImagePicker from 'react-native-image-crop-picker';
 
 const AddScreen = () => {
   const [coordinate, setCoordinate] = useState({
@@ -25,13 +26,56 @@ const AddScreen = () => {
     latitudeDelta: 0.006,
     longitudeDelta: 0.006,
   });
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState('Tes pos react native');
   const [image, setImage] = useState({
-    path: 'http://localhost:4000/images/take-photo.jpg',
-    mime: '',
+    path: '',
     data: null,
   });
   const [remarks, setRemark] = useState('');
+
+  const takePhotoFromCamera = async () => {
+    await ImagePicker.openCamera({
+      compressImageMaxWidth: 300,
+      compressImageMaxHeight: 400,
+      cropping: true,
+      includeBase64: true,
+      compressImageQuality: 0.7,
+    })
+      .then(photo => {
+        console.log(photo);
+        setImage({
+          ...image,
+          path: photo.path,
+          data: photo.data,
+        });
+      })
+      .then(bs.current.snapTo(1))
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
+  const choosePhotoFromLibrary = async () => {
+    await ImagePicker.openPicker({
+      compressImageMaxWidth: 300,
+      compressImageMaxHeight: 400,
+      cropping: true,
+      includeBase64: true,
+      compressImageQuality: 0.7,
+    })
+      .then(photo => {
+        console.log(photo);
+        setImage({
+          ...image,
+          path: photo.path,
+          data: photo.data,
+        });
+      })
+      .then(bs.current.snapTo(1))
+      .catch(err => {
+        console.log(err);
+      });
+  };
 
   const renderInner = () => (
     <View style={styles.panel}>
@@ -39,14 +83,21 @@ const AddScreen = () => {
         <Text style={styles.panelTitle}>Upload Photo</Text>
         <Text style={styles.panelSubtitle}>Choose Your Profile Picture</Text>
       </View>
-      <TouchableOpacity style={styles.panelButton} onPress={() => {}}>
+      <TouchableOpacity
+        style={styles.panelButton}
+        onPress={takePhotoFromCamera}>
         <Text style={styles.panelButtonTitle}>Take Photo</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.panelButton} onPress={() => {}}>
+      <TouchableOpacity
+        style={styles.panelButton}
+        onPress={choosePhotoFromLibrary}>
         <Text style={styles.panelButtonTitle}>Choose From Library</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.panelButton, {backgroundColor: '#949494', marginTop: 20}]}
+        style={[
+          styles.panelButton,
+          { backgroundColor: '#949494', marginTop: 20 },
+        ]}
         onPress={() => bs.current.snapTo(1)}>
         <Text style={styles.panelButtonTitle}>Cancel</Text>
       </TouchableOpacity>
@@ -67,13 +118,31 @@ const AddScreen = () => {
   const bs = React.createRef();
   const fall = new Animated.Value(1);
 
-  const handleSubmit = () => {
-    Alert.alert(
-      'Data Submit',
-      `${coordinate.latitude}, ${coordinate.longitude}, address: ${address}, ${
-        image.path
-      }, ${image.mime}, ${String(image.data)}, ${remarks}`,
-    );
+  const handleSubmit = async () => {
+    // Alert.alert(
+    //   'Data Submit',
+    //   `${address}, ${remarks}, ${String(image.data)}`,
+    // );
+    const data = new FormData();
+    data.append('title', 'tes body sjhsjhs');
+    data.append('body', 'tes body dfssf');
+    data.append('image', image.data);
+
+    try {
+      const response = await fetch('http://localhost:4000/v1/blog/post', {
+        method: 'POST',
+        body: data,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const feedBack = await response.json();
+
+      console.log('pos berhasil: ', feedBack);
+    } catch (err) {
+      console.log('error post: ', err);
+    }
   };
 
   return (
@@ -88,7 +157,11 @@ const AddScreen = () => {
         callbackNode={fall}
         enabledGestureInteraction={true}
       />
-      <ScrollView style={styles.mainContainer}>
+      <Animated.ScrollView
+        style={[
+          styles.mainContainer,
+          { opacity: Animated.add(0.1, Animated.multiply(fall, 1.0)) },
+        ]}>
         <View style={{ alignItems: 'center' }}>
           <View style={[styles.map, styles.mapContainer]}>
             <MapView
@@ -133,20 +206,20 @@ const AddScreen = () => {
           </View>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <View style={{ alignItems: 'center', width: screenWidth * 0.28 }}>
-            <ImageBackground
-              source={{
-                uri: image.path,
-              }}
-              style={styles.containerAddPhoto}>
-              <TouchableOpacity
-                style={styles.contentAddPhoto}
-                onPress={() => bs.current.snapTo(0)}>
-                <MaterialCommunityIcons name="camera" size={30} color="white" />
-              </TouchableOpacity>
-            </ImageBackground>
-            <Text style={{ color: 'grey', fontSize: 11 }}>{image.mime}</Text>
-          </View>
+          <ImageBackground
+            source={{
+              uri:
+                image.path.length === 0
+                  ? 'http://localhost:4000/images/take-photo.jpg'
+                  : image.path,
+            }}
+            style={styles.containerAddPhoto}>
+            <TouchableOpacity
+              style={styles.contentAddPhoto}
+              onPress={() => bs.current.snapTo(0)}>
+              <MaterialCommunityIcons name="camera" size={30} color="white" />
+            </TouchableOpacity>
+          </ImageBackground>
           <View style={{ marginTop: 20 }}>
             <TextInput
               placeholder="remarks"
@@ -165,7 +238,7 @@ const AddScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={{ height: 60 }}></View>
-      </ScrollView>
+      </Animated.ScrollView>
       <View style={{ height: screenHeight * 0.12 }}></View>
     </ImageBackground>
   );
