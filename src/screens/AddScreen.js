@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,8 +16,23 @@ import { BgApp, ImageSample } from '../assets/image';
 import Header from '../components/Header';
 import Animated from 'react-native-reanimated';
 import BottomSheet from 'reanimated-bottom-sheet';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const AddScreen = () => {
+  const [coordinate, setCoordinate] = useState({
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 0.006,
+    longitudeDelta: 0.006,
+  });
+  const [address, setAddress] = useState('');
+  const [image, setImage] = useState({
+    path: 'http://localhost:4000/images/take-photo.jpg',
+    mime: '',
+    data: null,
+  });
+  const [remarks, setRemark] = useState('');
+
   const renderInner = () => (
     <View style={styles.panel}>
       <View style={{ alignItems: 'center' }}>
@@ -31,7 +46,7 @@ const AddScreen = () => {
         <Text style={styles.panelButtonTitle}>Choose From Library</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.panelButton}
+        style={[styles.panelButton, {backgroundColor: '#949494', marginTop: 20}]}
         onPress={() => bs.current.snapTo(1)}>
         <Text style={styles.panelButtonTitle}>Cancel</Text>
       </TouchableOpacity>
@@ -40,15 +55,26 @@ const AddScreen = () => {
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
+    <TouchableOpacity
+      onPress={() => bs.current.snapTo(1)}
+      style={styles.header}>
       <View style={styles.panelHeader}>
-        <View style={styles.panelHandle} />
+        <View style={styles.panelHandle}></View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const bs = React.createRef();
   const fall = new Animated.Value(1);
+
+  const handleSubmit = () => {
+    Alert.alert(
+      'Data Submit',
+      `${coordinate.latitude}, ${coordinate.longitude}, address: ${address}, ${
+        image.path
+      }, ${image.mime}, ${String(image.data)}, ${remarks}`,
+    );
+  };
 
   return (
     <ImageBackground source={BgApp} style={styles.container}>
@@ -68,16 +94,11 @@ const AddScreen = () => {
             <MapView
               provider={PROVIDER_GOOGLE}
               style={styles.map}
-              region={{
-                latitude: -6.4155731,
-                longitude: 106.7989004,
-                latitudeDelta: 0.006,
-                longitudeDelta: 0.006,
-              }}>
+              region={coordinate}>
               <Marker
                 coordinate={{
-                  latitude: -6.4155731,
-                  longitude: 106.7989004,
+                  latitude: coordinate.latitude,
+                  longitude: coordinate.longitude,
                 }}
               />
             </MapView>
@@ -93,37 +114,53 @@ const AddScreen = () => {
             <View>
               <Text>Latitude: </Text>
               <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
-                -6.4123416
+                {coordinate.latitude}
               </Text>
             </View>
             <View style={{ marginLeft: 20 }}>
-              <Text>Latitude: </Text>
+              <Text>Longitude: </Text>
               <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
-                -6.4123416
+                {coordinate.longitude}
               </Text>
             </View>
           </View>
           <View style={{ marginTop: 5 }}>
             <Text style={{ fontSize: 12, color: 'grey' }}>
-              Jl. H Ganeng No. 64 Cipayung, Depok
+              {address.length === 0
+                ? 'no address, please connect to the internet.'
+                : address}
             </Text>
           </View>
         </View>
-        <View style={styles.containerAddPhoto}>
-          <TouchableOpacity style={styles.contentAddPhoto} onPress={() => bs.current.snapTo(0)}>
-            <Text style={{ color: 'white' }}>add a photo</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ marginTop: 20 }}>
-          <TextInput
-            placeholder="remarks"
-            multiline
-            maxLength={120}
-            style={styles.textInput}
-          />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ alignItems: 'center', width: screenWidth * 0.28 }}>
+            <ImageBackground
+              source={{
+                uri: image.path,
+              }}
+              style={styles.containerAddPhoto}>
+              <TouchableOpacity
+                style={styles.contentAddPhoto}
+                onPress={() => bs.current.snapTo(0)}>
+                <MaterialCommunityIcons name="camera" size={30} color="white" />
+              </TouchableOpacity>
+            </ImageBackground>
+            <Text style={{ color: 'grey', fontSize: 11 }}>{image.mime}</Text>
+          </View>
+          <View style={{ marginTop: 20 }}>
+            <TextInput
+              placeholder="remarks"
+              value={remarks}
+              autoCorrect={false}
+              onChangeText={value => setRemark(value)}
+              multiline
+              maxLength={120}
+              style={styles.textInput}
+            />
+          </View>
         </View>
         <View style={{ alignItems: 'center', marginTop: 30 }}>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={{ color: 'white' }}>Submit</Text>
           </TouchableOpacity>
         </View>
@@ -182,23 +219,28 @@ const styles = StyleSheet.create({
   },
   containerAddPhoto: {
     marginTop: 20,
-    height: 100,
+    width: screenWidth * 0.28,
+    height: 120,
     borderRadius: 30,
     backgroundColor: '#ACC3E6',
     justifyContent: 'center',
     alignItems: 'center',
+    resizeMode: 'cover',
+    overflow: 'hidden',
   },
   contentAddPhoto: {
-    width: screenWidth * 0.7,
-    height: 80,
+    width: screenWidth * 0.23,
+    height: 100,
     borderWidth: 2,
     borderColor: 'white',
     borderStyle: 'dashed',
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 6,
   },
   textInput: {
+    width: screenWidth * 0.5,
     padding: 20,
     borderWidth: 1,
     borderColor: '#749DDB',
@@ -207,6 +249,7 @@ const styles = StyleSheet.create({
   },
   panel: {
     padding: 20,
+    paddingHorizontal: screenWidth * 0.1,
     backgroundColor: '#FFFFFF',
     paddingTop: 20,
     // borderTopLeftRadius: 20,
@@ -249,14 +292,13 @@ const styles = StyleSheet.create({
   },
   panelButton: {
     padding: 13,
-    borderRadius: 10,
-    backgroundColor: '#FF6347',
+    borderRadius: 30,
+    backgroundColor: '#c28a6b',
     alignItems: 'center',
-    marginVertical: 7,
+    marginVertical: 4,
   },
   panelButtonTitle: {
     fontSize: 17,
-    fontWeight: 'bold',
     color: 'white',
   },
 });

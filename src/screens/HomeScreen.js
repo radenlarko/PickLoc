@@ -13,11 +13,16 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BgApp, LogoPickLocAtom } from '../assets/image';
 import { AuthContext } from '../store/AuthContext';
 import moment from 'moment';
+
+const wait = (timeout) => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+}
 
 const HomeScreen = ({ navigation }) => {
   const [data, setData] = useState([]);
@@ -26,9 +31,19 @@ const HomeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const authContext = useContext(AuthContext);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    wait(2000).then(() => {
+      getData();
+      setRefreshing(false)
+    });
+  }, [getData, perPage, totalData]);
+
   const getData = useCallback(async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await fetch(
         `http://localhost:4000/v1/blog/posts?page=1&perPage=${perPage}`,
         {
@@ -47,7 +62,7 @@ const HomeScreen = ({ navigation }) => {
 
       setData(dataJson.data);
       setTotalData(dataJson.total_data);
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       console.log('get data: ', error);
       Alert.alert(String(error));
@@ -61,7 +76,7 @@ const HomeScreen = ({ navigation }) => {
 
   const updatePerPage = () => {
     setPerpage(perPage + 5);
-  }
+  };
 
   const renderItem = ({ item }) => {
     return (
@@ -90,7 +105,10 @@ const HomeScreen = ({ navigation }) => {
       <>
         {perPage >= totalData ? null : (
           <View style={{ alignItems: 'center', marginTop: 30 }}>
-            <TouchableOpacity style={styles.buttonLoad} onPress={updatePerPage} disabled={loading}>
+            <TouchableOpacity
+              style={styles.buttonLoad}
+              onPress={updatePerPage}
+              disabled={loading}>
               {loading ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
@@ -147,13 +165,21 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-      <FlatList
-        contentContainerStyle={styles.scrollView}
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={item => item._id}
-        ListFooterComponent={ListFooterComponent}
-      />
+      {data.length === 0 ? null : (
+        <FlatList
+          contentContainerStyle={styles.scrollView}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={item => item._id}
+          ListFooterComponent={ListFooterComponent}
+        />
+      )}
       <View style={{ height: screenHeight * 0.12 }}></View>
     </ImageBackground>
   );
