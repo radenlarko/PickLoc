@@ -43,6 +43,8 @@ const HomeScreen = ({ navigation }) => {
 
       const dataJson = await response.json();
 
+      console.log(dataJson);
+
       setData(dataJson.data);
       setTotalData(dataJson.total_data);
       setLoading(false)
@@ -51,7 +53,7 @@ const HomeScreen = ({ navigation }) => {
       Alert.alert(String(error));
       setLoading(false);
     }
-  }, [perPage, setData, setTotalData]);
+  }, [perPage, setData, setTotalData, setLoading]);
 
   useEffect(() => {
     getData();
