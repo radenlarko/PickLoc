@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  Modal,
+  StatusBar,
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,7 +18,9 @@ import { BgApp, ImageSample } from '../assets/image';
 import Header from '../components/Header';
 import moment from 'moment';
 
-const DetailsScreen2 = ({route, navigation }) => {
+const DetailsScreen2 = ({ route, navigation }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
   const { item } = route.params;
   const title = item.title;
   const body = item.body;
@@ -36,17 +40,60 @@ const DetailsScreen2 = ({route, navigation }) => {
         }
         actionButton={() => navigation.goBack()}
       />
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert('Info', 'Image has been closed.');
+          setModalVisible(!modalVisible);
+        }}>
+        <View>
+          <StatusBar barStyle="light-content" backgroundColor="rgba(0, 0, 0, 0.9)" />
+          <View
+            style={{
+              height: screenHeight,
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Image
+              source={{
+                uri: `http://localhost:4000/${image}`,
+              }}
+              alt="picture-sample"
+              style={styles.pictureFull}
+            />
+          </View>
+          <TouchableOpacity
+            style={{
+              height: 50,
+              width: screenWidth,
+              paddingRight: 20,
+              justifyContent: 'center',
+              alignItems: 'flex-end',
+              position: 'absolute',
+            }}
+            onPress={() => setModalVisible(!modalVisible)}>
+            <MaterialCommunityIcons name="close" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
       <ScrollView style={styles.mainContainer}>
-        <Image
-          source={{
-            uri: `http://localhost:4000/${image}`,
-          }}
-          alt="picture-sample"
-          style={styles.picture}
-        />
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Image
+            source={{
+              uri: `http://localhost:4000/${image}`,
+            }}
+            alt="picture-sample"
+            style={styles.picture}
+          />
+        </TouchableOpacity>
         <View style={styles.containerContent}>
           <View style={styles.dateContainer}>
-            <Text style={{ color: '#59463B' }}>{moment(createdAt).format('ll')}</Text>
+            <Text style={{ color: '#59463B' }}>
+              {moment(createdAt).format('ll')}
+            </Text>
             <Text
               style={{ color: '#59463B', fontSize: 20, fontWeight: 'bold' }}>
               {moment(createdAt).format('LT')}
@@ -88,17 +135,13 @@ const DetailsScreen2 = ({route, navigation }) => {
             </View>
           </View>
           <View style={styles.containerAddress}>
-            <Text style={styles.address}>
-              {title}
-            </Text>
+            <Text style={styles.address}>{title}</Text>
           </View>
         </View>
         <View style={{ alignItems: 'center' }}>
           <View style={styles.remarksContainer}>
             <Text>Remarks : </Text>
-            <Text>
-              {body}
-            </Text>
+            <Text>{body}</Text>
           </View>
         </View>
         <View style={{ height: 60 }}></View>
@@ -147,6 +190,11 @@ const styles = StyleSheet.create({
     height: 217,
     borderRadius: 30,
     resizeMode: 'cover',
+  },
+  pictureFull: {
+    width: screenWidth,
+    height: screenHeight,
+    resizeMode: 'contain',
   },
   coordinateContainer: {
     backgroundColor: '#996F57',
