@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { BgApp, ImageSample } from '../assets/image';
@@ -19,22 +20,21 @@ import BottomSheet from 'reanimated-bottom-sheet';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ImagePicker from 'react-native-image-crop-picker';
 
-const AddScreen = () => {
+const AddScreen = ({navigation}) => {
   const [coordinate, setCoordinate] = useState({
     latitude: 0,
     longitude: 0,
     latitudeDelta: 0.006,
     longitudeDelta: 0.006,
   });
-  const [address, setAddress] = useState('Tes pos react native');
+  const [address, setAddress] = useState('');
   const [image, setImage] = useState({
     name: '',
     uri: '',
     type: '',
   });
   const [remarks, setRemark] = useState('');
-
-  console.log('image state: ', image)
+  const [loading, setLoading] = useState(false);
 
   const takePhotoFromCamera = async () => {
     await ImagePicker.openCamera({
@@ -126,10 +126,13 @@ const AddScreen = () => {
   const fall = new Animated.Value(1);
 
   const handleSubmit = async () => {
-    // Alert.alert(
-    //   'Data Submit',
-    //   `${address}, ${remarks}, ${String(image.data)}`,
-    // );
+    if (coordinate.latitude === 0 || !address || !image.uri || !remarks) {
+      Alert.alert('Error!!', 'Field cannot be empty!');
+      return null;
+    }
+
+    setLoading(true);
+
     const data = new FormData();
     data.append('title', 'tes body sjhsjhs');
     data.append('body', 'tes body dfssf');
@@ -148,8 +151,17 @@ const AddScreen = () => {
       const dataJson = await response.json();
 
       console.log('pos berhasil: ', dataJson);
+      setImage({
+        name: '',
+        uri: '',
+        type: '',
+      });
+      setRemark('');
+      setLoading(false);
+      navigation.navigate('Home')
     } catch (err) {
       console.log('error post: ', err);
+      setLoading(false);
     }
   };
 
@@ -242,7 +254,7 @@ const AddScreen = () => {
         </View>
         <View style={{ alignItems: 'center', marginTop: 30 }}>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-            <Text style={{ color: 'white' }}>Submit</Text>
+            {loading ? (<ActivityIndicator size='large' color='white' />) : (<Text style={{ color: 'white' }}>Submit</Text>)}
           </TouchableOpacity>
         </View>
         <View style={{ height: 60 }}></View>
