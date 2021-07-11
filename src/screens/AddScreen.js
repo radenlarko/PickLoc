@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,8 +11,11 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import GetLocation from 'react-native-get-location';
+import Geocoder from 'react-native-geocoder-reborn';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { BgApp, ImageSample } from '../assets/image';
 import Header from '../components/Header';
 import Animated from 'react-native-reanimated';
@@ -20,7 +23,11 @@ import BottomSheet from 'reanimated-bottom-sheet';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ImagePicker from 'react-native-image-crop-picker';
 
-const AddScreen = ({navigation}) => {
+const wait = timeout => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+};
+
+const AddScreen = ({ navigation }) => {
   const [coordinate, setCoordinate] = useState({
     latitude: 0,
     longitude: 0,
@@ -34,7 +41,109 @@ const AddScreen = ({navigation}) => {
     type: '',
   });
   const [remarks, setRemark] = useState('');
+  const [refresh, setRefresh] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefresh(true);
+    wait(2000).then(() => {
+      getMyLocation();
+      setImage({
+        name: '',
+        uri: '',
+        type: '',
+      });
+      setRemark('');
+      setRefresh(false);
+    });
+  }, [getMyLocation, setRefresh]);
+
+  const getMyLocation = useCallback(async () => {
+    setRefresh(true);
+    try {
+      const response = await GetLocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+      });
+
+      if (response.code === 'CANCELLED') {
+        return Promise.reject(response);
+      }
+
+      if (response.code === 'UNAVAILABLE') {
+        return Promise.reject(response);
+      }
+
+      if (response.code === 'TIMEOUT') {
+        return Promise.reject(response);
+      }
+
+      if (response.code === 'UNAUTHORIZED') {
+        return Promise.reject(response);
+      }
+
+      console.log('response: ', response);
+      setCoordinate({
+        ...coordinate,
+        latitude: response.latitude,
+        longitude: response.longitude,
+      });
+      setRefresh(false);
+
+      return Promise.resolve(response);
+    } catch (error) {
+      const { code, message } = error;
+      console.warn(code, message);
+      if (code === 'CANCELLED') {
+        Alert.alert(
+          'CANCELLED',
+          'Location cancelled by user or by another request',
+        );
+      }
+      if (code === 'UNAVAILABLE') {
+        Alert.alert(
+          'UNAVAILABLE',
+          'Location service is disabled or unavailable',
+          [{ text: 'Ok', onPress: () => GetLocation.openGpsSettings() }],
+        );
+      }
+      if (code === 'TIMEOUT') {
+        Alert.alert('TIMEOUT', 'Location request timed out');
+      }
+      if (code === 'UNAUTHORIZED') {
+        Alert.alert(
+          'UNAUTHORIZED',
+          'Authorization denied, please enable location permission',
+          [{ text: 'Ok', onPress: () => GetLocation.openAppSettings() }],
+        );
+      }
+      setRefresh(false);
+    }
+  }, [setRefresh, setCoordinate]);
+
+  const getAddress = useCallback(async () => {
+    try {
+      const lat = coordinate.latitude;
+      const lng = coordinate.longitude;
+      const response = await Geocoder.geocodePosition({ lat, lng });
+
+      if (coordinate.latitude === null || coordinate.longitude === null) {
+        return Promise.reject(response);
+      }
+
+      console.log(response[0].formattedAddress);
+      setAddress(response[0].formattedAddress);
+
+      return Promise.resolve(response);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [coordinate.latitude, coordinate.longitude, setAddress]);
+
+  useEffect(() => {
+    getMyLocation();
+    getAddress();
+  }, [getMyLocation, getAddress]);
 
   const takePhotoFromCamera = async () => {
     await ImagePicker.openCamera({
@@ -134,8 +243,8 @@ const AddScreen = ({navigation}) => {
     setLoading(true);
 
     const data = new FormData();
-    data.append('title', 'tes body sjhsjhs');
-    data.append('body', 'tes body dfssf');
+    data.append('title', address);
+    data.append('body', remarks);
     data.append('image', image);
 
     try {
@@ -158,7 +267,7 @@ const AddScreen = ({navigation}) => {
       });
       setRemark('');
       setLoading(false);
-      navigation.navigate('Home')
+      navigation.navigate('Home');
     } catch (err) {
       console.log('error post: ', err);
       setLoading(false);
@@ -181,7 +290,10 @@ const AddScreen = ({navigation}) => {
         style={[
           styles.mainContainer,
           { opacity: Animated.add(0.1, Animated.multiply(fall, 1.0)) },
-        ]}>
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={refresh} onRefresh={onRefresh} />
+        }>
         <View style={{ alignItems: 'center' }}>
           <View style={[styles.map, styles.mapContainer]}>
             <MapView
@@ -198,8 +310,20 @@ const AddScreen = ({navigation}) => {
           </View>
         </View>
         <View style={{ alignItems: 'center', marginTop: -16, elevation: 7 }}>
-          <TouchableOpacity style={styles.refreshMaps}>
-            <Text style={{ color: 'white', fontSize: 11 }}>Refresh Maps</Text>
+          <TouchableOpacity onPress={getMyLocation} disabled={refresh}>
+            {refresh ? (
+              <View style={[styles.refreshMaps, { backgroundColor: '#b0b0b0' }]}>
+                <Text style={{ color: 'white', fontSize: 11 }}>
+                  Refresh Maps
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.refreshMaps}>
+                <Text style={{ color: 'white', fontSize: 11 }}>
+                  Refresh Maps
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
         <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
@@ -253,8 +377,18 @@ const AddScreen = ({navigation}) => {
           </View>
         </View>
         <View style={{ alignItems: 'center', marginTop: 30 }}>
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-            {loading ? (<ActivityIndicator size='large' color='white' />) : (<Text style={{ color: 'white' }}>Submit</Text>)}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={loading}>
+            {loading ? (
+              <View style={[styles.button, {backgroundColor: '#b0b0b0'}]}>
+                <ActivityIndicator size="large" color="white" />
+              </View>
+            ) : (
+              <View style={styles.button}>
+                <Text style={{ color: 'white' }}>Submit</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
         <View style={{ height: 60 }}></View>

@@ -93,7 +93,9 @@ const HomeScreen = ({ navigation }) => {
             <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
               {moment(item.createdAt).format('lll')}
             </Text>
-            <Text style={{ fontSize: 10, color: '#9E8A7F' }}>{item.title}</Text>
+            <View style={{maxWidth: screenWidth * 0.68}}>
+              <Text style={{ fontSize: 10, color: '#9E8A7F' }}>{item.title}</Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
