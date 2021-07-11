@@ -143,7 +143,7 @@ const AddScreen = ({ navigation }) => {
   useEffect(() => {
     getMyLocation();
     getAddress();
-  }, [getMyLocation, getAddress]);
+  }, [getMyLocation]);
 
   const takePhotoFromCamera = async () => {
     await ImagePicker.openCamera({
