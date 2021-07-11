@@ -28,25 +28,30 @@ const AddScreen = () => {
   });
   const [address, setAddress] = useState('Tes pos react native');
   const [image, setImage] = useState({
-    path: '',
-    data: null,
+    name: '',
+    uri: '',
+    type: '',
   });
   const [remarks, setRemark] = useState('');
+
+  console.log('image state: ', image)
 
   const takePhotoFromCamera = async () => {
     await ImagePicker.openCamera({
       compressImageMaxWidth: 300,
       compressImageMaxHeight: 400,
       cropping: true,
-      includeBase64: true,
       compressImageQuality: 0.7,
     })
       .then(photo => {
         console.log(photo);
+        const uploadUri = photo.path;
+        let fileName = uploadUri.substring(uploadUri.lastIndexOf('/') + 1);
         setImage({
           ...image,
-          path: photo.path,
-          data: photo.data,
+          name: fileName,
+          uri: photo.path,
+          type: photo.mime,
         });
       })
       .then(bs.current.snapTo(1))
@@ -60,15 +65,17 @@ const AddScreen = () => {
       compressImageMaxWidth: 300,
       compressImageMaxHeight: 400,
       cropping: true,
-      includeBase64: true,
       compressImageQuality: 0.7,
     })
       .then(photo => {
         console.log(photo);
+        const uploadUri = photo.path;
+        let fileName = uploadUri.substring(uploadUri.lastIndexOf('/') + 1);
         setImage({
           ...image,
-          path: photo.path,
-          data: photo.data,
+          name: fileName,
+          uri: photo.path,
+          type: photo.mime,
         });
       })
       .then(bs.current.snapTo(1))
@@ -126,20 +133,21 @@ const AddScreen = () => {
     const data = new FormData();
     data.append('title', 'tes body sjhsjhs');
     data.append('body', 'tes body dfssf');
-    data.append('image', image.data);
+    data.append('image', image);
 
     try {
       const response = await fetch('http://localhost:4000/v1/blog/post', {
         method: 'POST',
         body: data,
         headers: {
+          Accept: 'application/json',
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      const feedBack = await response.json();
+      const dataJson = await response.json();
 
-      console.log('pos berhasil: ', feedBack);
+      console.log('pos berhasil: ', dataJson);
     } catch (err) {
       console.log('error post: ', err);
     }
@@ -209,9 +217,9 @@ const AddScreen = () => {
           <ImageBackground
             source={{
               uri:
-                image.path.length === 0
+                image.uri.length === 0
                   ? 'http://localhost:4000/images/take-photo.jpg'
-                  : image.path,
+                  : image.uri,
             }}
             style={styles.containerAddPhoto}>
             <TouchableOpacity
