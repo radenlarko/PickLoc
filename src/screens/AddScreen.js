@@ -88,6 +88,7 @@ const AddScreen = ({ navigation }) => {
         latitude: response.latitude,
         longitude: response.longitude,
       });
+      getAddress(response.latitude, response.longitude);
       setRefresh(false);
 
       return Promise.resolve(response);
@@ -119,15 +120,13 @@ const AddScreen = ({ navigation }) => {
       }
       setRefresh(false);
     }
-  }, [setRefresh, setCoordinate]);
+  }, [setRefresh, setCoordinate, getAddress]);
 
-  const getAddress = useCallback(async () => {
+  const getAddress = useCallback(async (lat, lng) => {
     try {
-      const lat = coordinate.latitude;
-      const lng = coordinate.longitude;
       const response = await Geocoder.geocodePosition({ lat, lng });
 
-      if (coordinate.latitude === null || coordinate.longitude === null) {
+      if (lat === null || coordinate.longitude === lng) {
         return Promise.reject(response);
       }
 
@@ -138,7 +137,7 @@ const AddScreen = ({ navigation }) => {
     } catch (error) {
       console.log(error);
     }
-  }, [coordinate.latitude, coordinate.longitude, setAddress]);
+  }, [setAddress]);
 
   useEffect(() => {
     getMyLocation();
